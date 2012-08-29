@@ -1,6 +1,21 @@
 <h1>Video#index</h1>
 <div id="video_view">
 </div>
+<div id="comment_view" style="width: 800px; height: 500px; margin-top: -500px; z-index: 10000;">
+</div>
+
 <script type="text/javascript">
-  new VideoPageView().appendTo($('#video_view'));
+  var router = new VideoRouter();
+  Backbone.history.start();
 </script>
+<a href="" onClick="router.navigate('#uUKHgwi7-DU', {trigger:true}); return false;">Chai Maxx</a>
+<a href="" onClick="router.navigate('#u7z9M0vFPbI', {trigger:true}); return false;">行くぜっ!怪盗少女</a>
+<a href="" onClick="router.navigate('#LwMuHy8t_Vk', {trigger:true}); return false;">サンタさん</a>
+<a href="" onClick="router.navigate('#KiqLuL4AV4E', {trigger:true}); return false;">ココ☆ナツ</a>
+
+<form onSubmit="router.comment($('#comment_area').val()); return false;">
+<input type="text" id="comment_area" />
+<input type="submit" value="コメント" />
+</form>
+
+

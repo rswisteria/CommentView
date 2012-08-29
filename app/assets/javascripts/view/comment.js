@@ -4,13 +4,13 @@ var CommentView = Backbone.View.extend({
   width: 800,
   height: 480,
   delay: 66,
-  fps: 30,
   comment_through: 4000,
-  current_fps: 0,
   line_margin: 10,
+  target_fps: 30,
   
   initialize: function () {
     this.model.on('add', this.addComment, this);
+    this.fps = new FPSTimer(this.target_fps);
   },
 
   resize: function (width, height) {
@@ -49,52 +49,28 @@ var CommentView = Backbone.View.extend({
 
   canvas_render: function()
   {
-    if (this._time == undefined) {
-      this.current_fps = this.fps;
-    } else {
-      this.current_fps = 1000 / (new Date() - this._time);
-    }
-    this._time = new Date();
+    this.fps.check();
     context = this.el.getContext('2d');
     // アニメーション処理 - ここから
     context.clearRect(0, 0, this.width, this.height);
 
-    context.font = "normal 10px san-serif";
-    context.fillStyle = '#000000';
-    context.textBaseline = "middle";
-    context.textAlignment = "left";
-    context.fillText("FPS: " + this.current_fps.toFixed(2), 0, 10);
-    
+    // FPS描画
+    this.fps.draw(context, 0, 0);
+
     var removeArray = [];
 
     this.model.each(function(comment) {
       // コメント描画
-      var text = comment.get('text');
-
-      context.font = "normal 30px san-serif";
-      context.fillStyle = '#000000';
-      context.textBaseline = "top";
-      context.textAlignment = "left";
-
       var comment_velocity = comment.get('velocity');
       if (!comment_velocity) {
-        var textMetrics = context.measureText(text);
-        comment_velocity = (this.width + textMetrics.width) / (this.comment_through / (1000 / this.fps));
-        comment.set({ velocity: comment_velocity, text_width: textMetrics.width, text_height: 30 + this.line_margin }, { silent: true });
-        var y = CollisionDetector.getNextY(comment, this.model, this.height, this.line_margin);
-        comment.set({ y: y }, { silent: true });
+        comment.updateVelocity(context, this.model, this.width, this.height, this.comment_through, this.target_fps, this.line_margin);
       }
-
-      var comment_x = comment.get('x');
-      var comment_y = comment.get('y');
-
-      context.fillText(text, this.width - comment_x, comment_y);
+      comment.draw(context, this.width);
       
       // コメントの情報更新
-      comment.set({ x: comment_x + comment_velocity }, { silent: true } );
-      if (comment.get('x') > comment.get('text_width') + this.width) {
+      comment.updateX(function () {
         removeArray.push(comment);
-      } 
+      }, this.width);
     }, this);
 
     _.each(removeArray, function (comment) {
@@ -103,11 +79,38 @@ var CommentView = Backbone.View.extend({
     
     // アニメーション処理 - ここまで
     if (this._status == 'play') {
-      var time = new Date() - this._time;
       var self = this;
-      var interval = (1000 / this.fps) - time;
-      interval = interval > 5 ? interval : 5;
-      setTimeout(function () { self.canvas_render(); }, interval);
+      this.fps.setTimeout(function () { self.canvas_render(); });
     }
   }
 });
+
+var FPSTimer = function(target_fps) {
+  this.target_fps = target_fps;
+};
+
+FPSTimer.prototype.check = function () {
+  var newDate = new Date();
+  if (this._time == undefined) {
+    this.fps = this.target_fps;
+  } else {
+    this.fps = 1000 / (newDate - this._time);
+  }
+  this._time = newDate;
+};
+
+FPSTimer.prototype.setTimeout = function (func) {
+  var time = new Date - this._time;
+  var interval = (1000 / this.target_fps) - time;
+  setTimeout(func, interval);
+};
+
+FPSTimer.prototype.draw = function (context, x, y) {
+  context.save();
+  context.font = "normal 10px san-serif";
+  context.fillStyle = '#000000';
+  context.textBaseline = "top";
+  context.textAlignment = "left";
+  context.fillText("FPS: " + this.fps.toFixed(2), x, y);
+  context.restore();
+};

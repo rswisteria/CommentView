@@ -1,0 +1,2 @@
+var VideoRouter = Backbone.Router.extend({
+});
