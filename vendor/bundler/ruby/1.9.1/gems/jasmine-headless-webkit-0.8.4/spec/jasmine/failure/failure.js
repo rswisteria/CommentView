@@ -1,1 +1,0 @@
-var failure = 0;

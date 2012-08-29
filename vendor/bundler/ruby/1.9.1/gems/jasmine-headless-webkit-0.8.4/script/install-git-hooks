@@ -1,6 +1,0 @@
-#!/bin/bash
-
-for hook in script/hooks/* ; do
-  ln -sf $PWD/$hook .git/hooks/${hook##*/}
-done
-

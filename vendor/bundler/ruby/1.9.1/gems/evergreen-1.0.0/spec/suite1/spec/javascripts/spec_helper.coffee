@@ -1,1 +1,0 @@
-window.CoffeeSpecHelper = { coffee: 'script' }
